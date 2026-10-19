@@ -2,8 +2,6 @@
 
 A minimal Linux command-line tool that renders Kubernetes JSON for a vLLM-compatible container. It creates a `Deployment` with NVIDIA GPU requests and limits, CPU and memory bounds, health probes, and a matching internal `ClusterIP` `Service`.
 
-This is an initial, unvalidated version. It has not been benchmarked, load tested, or operated in production. Review every generated manifest against your model, vLLM image, Kubernetes version, and infrastructure before applying it.
-
 ## Prerequisites
 
 - Linux with Python 3.9 or newer
@@ -50,11 +48,11 @@ The service is internal to the cluster. A workload in the same namespace can cal
 
 ## Hugging Face token
 
-Create the secret separately; do not put the token on the command line or in a manifest:
+Create the secret separately from a protected file populated by your approved secret-management workflow. Replace the example path with that file's path; the file should contain only the token. Do not commit it or put the token itself in shell arguments:
 
 ```bash
 kubectl -n inference create secret generic hugging-face \
-  --from-literal=token='YOUR_TOKEN'
+  --from-file=token=/secure/path/hugging-face-token
 ```
 
 Reference that existing secret when rendering:
@@ -82,7 +80,18 @@ python3 -m llm_inference_platform cost \
 
 This is simple arithmetic: hourly GPU price × hours × GPU count. The estimate excludes CPU/RAM compute, storage, network, taxes, and all other overhead. It does not fetch live pricing.
 
-## Caveats
+## Design decisions
+
+- **Generate manifests without deploying.** Rendering keeps cluster access separate and lets operators review resource settings before rollout.
+- **Explicit GPU requests.** GPU count is a scheduling input, not proof that a model fits in memory. Model sizing and multi-GPU runtime arguments require workload-specific decisions.
+- **User-supplied pricing.** A transparent calculation avoids implying live billing integration. Provider pricing APIs and measured utilization would be needed for operational cost reporting.
+- **Internal service by default.** External access requires a separate decision about authentication, TLS, and network exposure.
+
+For production use, prioritize model startup behavior, capacity measurement, a persistent model cache, and metrics collected from the actual serving stack.
+
+## Status and limitations
+
+- Initial implementation; no local tests, benchmarks, or production validation have been performed. Review generated manifests for your model, image, and cluster.
 
 - The default `/health` probes assume the supplied image exposes vLLM's health endpoint on port 8000.
 - Model startup can take longer than the probe defaults. Adjust the generated JSON for large or cold-starting models.
