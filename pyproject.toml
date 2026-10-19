@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-inference-platform"
+version = "0.1.0"
+description = "Minimal Kubernetes manifest generator for vLLM inference"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "Juan M De Sousa"}]
+dependencies = []
+
+[project.scripts]
+llm-inference-platform = "llm_inference_platform.cli:main"
